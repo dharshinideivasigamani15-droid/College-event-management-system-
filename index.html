@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>College Event Management System</title>
+<style>
+:root {
+  --primary: #4f46e5;
+  --primary-dark: #4338ca;
+  --danger: #dc2626;
+  --danger-dark: #b91c1c;
+  --success: #16a34a;
+  --bg: #f4f5f9;
+  --surface: #ffffff;
+  --border: #e2e4ec;
+  --text: #1f2330;
+  --text-muted: #6b7280;
+  --radius: 10px;
+  --shadow: 0 2px 8px rgba(20, 20, 40, 0.06);
+  --shadow-lg: 0 10px 30px rgba(20, 20, 40, 0.18);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ===== Navbar ===== */
+.navbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.nav-brand {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* ===== Buttons ===== */
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+
+.btn-secondary { background: #eef0f5; color: var(--text); }
+.btn-secondary:hover { background: #e2e4ec; }
+
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: var(--danger-dark); }
+
+.btn-small { padding: 6px 12px; font-size: 0.8rem; background: #eef0f5; color: var(--text); }
+.btn-small.active { background: var(--primary); color: #fff; }
+
+.btn-icon {
+  border: none;
+  background: #eef0f5;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-right: 4px;
+}
+.btn-icon.view { color: var(--primary); }
+.btn-icon.edit { color: #d97706; }
+.btn-icon.delete { color: var(--danger); }
+.btn-icon:hover { background: #e2e4ec; }
+
+/* ===== Layout ===== */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.dashboard-header h1 { margin: 0 0 4px; font-size: 1.7rem; }
+.subtitle { color: var(--text-muted); margin: 0 0 18px; }
+
+.stats-row { display: flex; gap: 16px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 24px;
+  box-shadow: var(--shadow);
+  min-width: 130px;
+}
+.stat-number { display: block; font-size: 1.6rem; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 0.8rem; color: var(--text-muted); }
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+#searchInput {
+  flex: 1;
+  min-width: 220px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+#searchInput:focus { outline: 2px solid var(--primary); }
+
+.view-toggle { display: flex; gap: 6px; }
+.view-toggle .btn-small { border-radius: 6px; }
+
+/* ===== State messages ===== */
+.state-message {
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+}
+.error-state { color: var(--danger); border-color: var(--danger); }
+.error-state code { background: #fde8e8; padding: 2px 6px; border-radius: 4px; }
+
+/* ===== Card grid ===== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.event-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-card h3 { margin: 0; font-size: 1.05rem; }
+
+.badge {
+  display: inline-block;
+  align-self: flex-start;
+  background: #eef0ff;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.event-card .meta { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+.event-card .card-actions { margin-top: 10px; display: flex; }
+
+/* ===== Table ===== */
+.table-wrapper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  box-shadow: var(--shadow);
+}
+
+.event-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+.event-table th, .event-table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.event-table th { background: #f8f9fc; font-weight: 700; color: var(--text-muted); }
+.event-table tr:last-child td { border-bottom: none; }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 30, 0.5);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.modal-small { max-width: 400px; }
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h2 { margin: 0; font-size: 1.1rem; }
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 4px; }
+.modal-body label { font-size: 0.85rem; font-weight: 600; margin-top: 10px; }
+.modal-body input, .modal-body select, .modal-body textarea {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  width: 100%;
+}
+.modal-body input:focus, .modal-body select:focus, .modal-body textarea:focus {
+  outline: 2px solid var(--primary);
+}
+
+.form-row { display: flex; gap: 12px; }
+.form-row > div { flex: 1; }
+
+.error-text { color: var(--danger); font-size: 0.78rem; min-height: 16px; }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* View details modal content */
+.detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.detail-row:last-child { border-bottom: none; }
+.detail-row .label { color: var(--text-muted); font-weight: 600; }
+.detail-row .value { text-align: right; max-width: 60%; }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--success);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+  z-index: 100;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.toast-error { background: var(--danger); }
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .navbar { padding: 12px 16px; }
+  .form-row { flex-direction: column; }
+  .stats-row { flex-wrap: wrap; }
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .detail-row { flex-direction: column; gap: 2px; }
+  .detail-row .value { text-align: left; max-width: 100%; }
+}
+
+</style>
+</head>
+<body>
+
+  <!-- ===== Navigation bar ===== -->
+  <nav class="navbar">
+    <div class="nav-brand">🎓 College Event Manager</div>
+    <button id="addEventBtn" class="btn btn-primary">+ Add Event</button>
+  </nav>
+
+  <!-- ===== Toast notification ===== -->
+  <div id="toast" class="toast"></div>
+
+  <main class="container">
+
+    <!-- ===== Dashboard header ===== -->
+    <section class="dashboard-header">
+      <h1>Dashboard</h1>
+      <p class="subtitle">Manage all college events from one place</p>
+
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card">
+          <span class="stat-number" id="totalEvents">0</span>
+          <span class="stat-label">Total Events</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="upcomingEvents">0</span>
+          <span class="stat-label">Upcoming</span>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input type="text" id="searchInput" placeholder="Search events by name...">
+        <div class="view-toggle">
+          <button id="cardViewBtn" class="btn btn-small active">Cards</button>
+          <button id="tableViewBtn" class="btn btn-small">Table</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Loading / empty states ===== -->
+    <div id="loadingState" class="state-message">Loading events...</div>
+    <div id="emptyState" class="state-message" style="display:none;">
+      No events found. Click <strong>+ Add Event</strong> to create one.
+    </div>
+    <div id="errorState" class="state-message error-state" style="display:none;">
+      Could not reach the server. Make sure the Django backend is running at
+      <code>http://127.0.0.1:8000</code>.
+    </div>
+
+    <!-- ===== Card view ===== -->
+    <section id="cardContainer" class="card-grid"></section>
+
+    <!-- ===== Table view ===== -->
+    <section id="tableContainer" class="table-wrapper" style="display:none;">
+      <table class="event-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Venue</th>
+            <th>Organizer</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <!-- ===== Add / Edit Event Modal ===== -->
+  <div id="eventModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Add New Event</h2>
+        <button class="modal-close" data-close="eventModal">&times;</button>
+      </div>
+      <form id="eventForm" class="modal-body" novalidate>
+        <input type="hidden" id="eventId">
+
+        <label for="eventName">Event Name *</label>
+        <input type="text" id="eventName" maxlength="200" required>
+        <span class="error-text" id="err-eventName"></span>
+
+        <label for="eventType">Event Type *</label>
+        <select id="eventType" required>
+          <option value="">-- Select type --</option>
+          <option value="Technical">Technical</option>
+          <option value="Cultural">Cultural</option>
+          <option value="Sports">Sports</option>
+          <option value="Workshop">Workshop</option>
+          <option value="Seminar">Seminar</option>
+          <option value="Other">Other</option>
+        </select>
+        <span class="error-text" id="err-eventType"></span>
+
+        <div class="form-row">
+          <div>
+            <label for="eventDate">Date *</label>
+            <input type="date" id="eventDate" required>
+            <span class="error-text" id="err-eventDate"></span>
+          </div>
+          <div>
+            <label for="eventTime">Time *</label>
+            <input type="time" id="eventTime" required>
+            <span class="error-text" id="err-eventTime"></span>
+          </div>
+        </div>
+
+        <label for="eventVenue">Venue *</label>
+        <input type="text" id="eventVenue" maxlength="200" required>
+        <span class="error-text" id="err-eventVenue"></span>
+
+        <label for="eventOrganizer">Organizer *</label>
+        <input type="text" id="eventOrganizer" maxlength="200" required>
+        <span class="error-text" id="err-eventOrganizer"></span>
+
+        <label for="eventDescription">Description</label>
+        <textarea id="eventDescription" rows="3" maxlength="1000"></textarea>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="eventModal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">Save Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== View Details Modal ===== -->
+  <div id="viewModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Event Details</h2>
+        <button class="modal-close" data-close="viewModal">&times;</button>
+      </div>
+      <div class="modal-body" id="viewModalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="viewModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Delete Confirmation Modal ===== -->
+  <div id="deleteModal" class="modal-overlay">
+    <div class="modal modal-small">
+      <div class="modal-header">
+        <h2>Delete Event?</h2>
+        <button class="modal-close" data-close="deleteModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete <strong id="deleteEventName"></strong>? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="deleteModal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+// ======================================================
+// College Event Management System - Frontend logic
+// Talks to the Django REST Framework API for all CRUD ops
+// ======================================================
+
+const API_BASE_URL = 'http://127.0.0.1:8000/api/events/';
+
+let allEvents = [];       // cache of the last fetched events
+let currentView = 'card';  // 'card' | 'table'
+let deleteTargetId = null;
+
+// ---------- DOM references ----------
+const cardContainer = document.getElementById('cardContainer');
+const tableBody = document.getElementById('tableBody');
+const tableContainer = document.getElementById('tableContainer');
+const loadingState = document.getElementById('loadingState');
+const emptyState = document.getElementById('emptyState');
+const errorState = document.getElementById('errorState');
+const searchInput = document.getElementById('searchInput');
+const totalEventsEl = document.getElementById('totalEvents');
+const upcomingEventsEl = document.getElementById('upcomingEvents');
+
+const eventModal = document.getElementById('eventModal');
+const eventForm = document.getElementById('eventForm');
+const modalTitle = document.getElementById('modalTitle');
+const viewModal = document.getElementById('viewModal');
+const viewModalBody = document.getElementById('viewModalBody');
+const deleteModal = document.getElementById('deleteModal');
+const deleteEventName = document.getElementById('deleteEventName');
+
+// ======================================================
+// Init
+// ======================================================
+document.addEventListener('DOMContentLoaded', () => {
+  fetchEvents();
+
+  document.getElementById('addEventBtn').addEventListener('click', openAddModal);
+  document.getElementById('cardViewBtn').addEventListener('click', () => switchView('card'));
+  document.getElementById('tableViewBtn').addEventListener('click', () => switchView('table'));
+  document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+  eventForm.addEventListener('submit', handleFormSubmit);
+
+  let searchTimer;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => fetchEvents(searchInput.value.trim()), 300);
+  });
+
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => closeModal(document.getElementById(btn.dataset.close)));
+  });
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal(overlay);
+    });
+  });
+});
+
+// ======================================================
+// API calls
+// ======================================================
+async function fetchEvents(search = '') {
+  showState('loading');
+  try {
+    const url = search ? `${API_BASE_URL}?search=${encodeURIComponent(search)}` : API_BASE_URL;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Network response was not ok');
+    const data = await res.json();
+    allEvents = Array.isArray(data) ? data : (data.results || []);
+    renderEvents(allEvents);
+    updateStats(allEvents);
+  } catch (err) {
+    showState('error');
+    console.error(err);
+  }
+}
+
+async function createEvent(payload) {
+  const res = await fetch(API_BASE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return handleApiResponse(res);
+}
+
+async function updateEvent(id, payload) {
+  const res = await fetch(`${API_BASE_URL}${id}/`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return handleApiResponse(res);
+}
+
+async function deleteEventById(id) {
+  const res = await fetch(`${API_BASE_URL}${id}/`, { method: 'DELETE' });
+  if (!res.ok && res.status !== 204) {
+    throw new Error('Failed to delete event');
+  }
+}
+
+async function handleApiResponse(res) {
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error('Validation failed');
+    err.fieldErrors = data;
+    throw err;
+  }
+  return data;
+}
+
+// ======================================================
+// Rendering
+// ======================================================
+function showState(state) {
+  loadingState.style.display = state === 'loading' ? 'block' : 'none';
+  errorState.style.display = state === 'error' ? 'block' : 'none';
+  if (state === 'loading' || state === 'error') {
+    cardContainer.style.display = 'none';
+    tableContainer.style.display = 'none';
+    emptyState.style.display = 'none';
+  }
+}
+
+function renderEvents(events) {
+  loadingState.style.display = 'none';
+  errorState.style.display = 'none';
+
+  if (!events.length) {
+    emptyState.style.display = 'block';
+    cardContainer.style.display = 'none';
+    tableContainer.style.display = 'none';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  renderCards(events);
+  renderTable(events);
+  switchView(currentView);
+}
+
+function renderCards(events) {
+  cardContainer.innerHTML = events.map(ev => `
+    <div class="event-card">
+      <span class="badge">${escapeHtml(ev.event_type)}</span>
+      <h3>${escapeHtml(ev.event_name)}</h3>
+      <p class="meta">📅 ${formatDate(ev.date)} &nbsp;·&nbsp; 🕒 ${formatTime(ev.time)}</p>
+      <p class="meta">📍 ${escapeHtml(ev.venue)}</p>
+      <p class="meta">👤 ${escapeHtml(ev.organizer)}</p>
+      <div class="card-actions">
+        <button class="btn-icon view" onclick="viewEvent(${ev.id})" title="View">👁 View</button>
+        <button class="btn-icon edit" onclick="openEditModal(${ev.id})" title="Edit">✏ Edit</button>
+        <button class="btn-icon delete" onclick="openDeleteModal(${ev.id})" title="Delete">🗑 Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTable(events) {
+  tableBody.innerHTML = events.map(ev => `
+    <tr>
+      <td>${escapeHtml(ev.event_name)}</td>
+      <td>${escapeHtml(ev.event_type)}</td>
+      <td>${formatDate(ev.date)}</td>
+      <td>${formatTime(ev.time)}</td>
+      <td>${escapeHtml(ev.venue)}</td>
+      <td>${escapeHtml(ev.organizer)}</td>
+      <td>
+        <button class="btn-icon view" onclick="viewEvent(${ev.id})">👁</button>
+        <button class="btn-icon edit" onclick="openEditModal(${ev.id})">✏</button>
+        <button class="btn-icon delete" onclick="openDeleteModal(${ev.id})">🗑</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function updateStats(events) {
+  totalEventsEl.textContent = events.length;
+  const today = new Date().toISOString().split('T')[0];
+  upcomingEventsEl.textContent = events.filter(ev => ev.date >= today).length;
+}
+
+function switchView(view) {
+  currentView = view;
+  const isEmpty = emptyState.style.display === 'block';
+  cardContainer.style.display = (!isEmpty && view === 'card') ? 'grid' : 'none';
+  tableContainer.style.display = (!isEmpty && view === 'table') ? 'block' : 'none';
+  document.getElementById('cardViewBtn').classList.toggle('active', view === 'card');
+  document.getElementById('tableViewBtn').classList.toggle('active', view === 'table');
+}
+
+// ======================================================
+// Add / Edit modal
+// ======================================================
+function openAddModal() {
+  eventForm.reset();
+  document.getElementById('eventId').value = '';
+  modalTitle.textContent = 'Add New Event';
+  clearFormErrors();
+  openModal(eventModal);
+}
+
+function openEditModal(id) {
+  const ev = allEvents.find(e => e.id === id);
+  if (!ev) return;
+  clearFormErrors();
+  document.getElementById('eventId').value = ev.id;
+  document.getElementById('eventName').value = ev.event_name;
+  document.getElementById('eventType').value = ev.event_type;
+  document.getElementById('eventDate').value = ev.date;
+  document.getElementById('eventTime').value = ev.time.slice(0, 5);
+  document.getElementById('eventVenue').value = ev.venue;
+  document.getElementById('eventOrganizer').value = ev.organizer;
+  document.getElementById('eventDescription').value = ev.description || '';
+  modalTitle.textContent = 'Edit Event';
+  openModal(eventModal);
+}
+
+async function handleFormSubmit(e) {
+  e.preventDefault();
+  if (!validateForm()) return;
+
+  const id = document.getElementById('eventId').value;
+  const payload = {
+    event_name: document.getElementById('eventName').value.trim(),
+    event_type: document.getElementById('eventType').value,
+    date: document.getElementById('eventDate').value,
+    time: document.getElementById('eventTime').value,
+    venue: document.getElementById('eventVenue').value.trim(),
+    organizer: document.getElementById('eventOrganizer').value.trim(),
+    description: document.getElementById('eventDescription').value.trim(),
+  };
+
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+
+  try {
+    if (id) {
+      await updateEvent(id, payload);
+      showToast('Event updated successfully!');
+    } else {
+      await createEvent(payload);
+      showToast('Event added successfully!');
+    }
+    closeModal(eventModal);
+    fetchEvents(searchInput.value.trim());
+  } catch (err) {
+    if (err.fieldErrors) applyServerErrors(err.fieldErrors);
+    showToast('Could not save the event. Please check the form.', 'error');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save Event';
+  }
+}
+
+// ---------- Validation ----------
+function validateForm() {
+  clearFormErrors();
+  let valid = true;
+
+  const fields = [
+    ['eventName', 'Event name is required.'],
+    ['eventType', 'Please select an event type.'],
+    ['eventDate', 'Date is required.'],
+    ['eventTime', 'Time is required.'],
+    ['eventVenue', 'Venue is required.'],
+    ['eventOrganizer', 'Organizer is required.'],
+  ];
+
+  fields.forEach(([id, msg]) => {
+    const el = document.getElementById(id);
+    if (!el.value.trim()) {
+      setFieldError(id, msg);
+      valid = false;
+    }
+  });
+
+  return valid;
+}
+
+function setFieldError(id, msg) {
+  const errEl = document.getElementById(`err-${id}`);
+  if (errEl) errEl.textContent = msg;
+}
+
+function clearFormErrors() {
+  document.querySelectorAll('.error-text').forEach(el => (el.textContent = ''));
+}
+
+function applyServerErrors(fieldErrors) {
+  Object.entries(fieldErrors).forEach(([field, messages]) => {
+    const idMap = {
+      event_name: 'eventName', event_type: 'eventType', date: 'eventDate',
+      time: 'eventTime', venue: 'eventVenue', organizer: 'eventOrganizer',
+    };
+    const id = idMap[field];
+    if (id) setFieldError(id, Array.isArray(messages) ? messages[0] : String(messages));
+  });
+}
+
+// ======================================================
+// View details modal
+// ======================================================
+function viewEvent(id) {
+  const ev = allEvents.find(e => e.id === id);
+  if (!ev) return;
+  viewModalBody.innerHTML = `
+    <div class="detail-row"><span class="label">Event Name</span><span class="value">${escapeHtml(ev.event_name)}</span></div>
+    <div class="detail-row"><span class="label">Type</span><span class="value">${escapeHtml(ev.event_type)}</span></div>
+    <div class="detail-row"><span class="label">Date</span><span class="value">${formatDate(ev.date)}</span></div>
+    <div class="detail-row"><span class="label">Time</span><span class="value">${formatTime(ev.time)}</span></div>
+    <div class="detail-row"><span class="label">Venue</span><span class="value">${escapeHtml(ev.venue)}</span></div>
+    <div class="detail-row"><span class="label">Organizer</span><span class="value">${escapeHtml(ev.organizer)}</span></div>
+    <div class="detail-row"><span class="label">Description</span><span class="value">${escapeHtml(ev.description) || '—'}</span></div>
+  `;
+  openModal(viewModal);
+}
+
+// ======================================================
+// Delete flow
+// ======================================================
+function openDeleteModal(id) {
+  const ev = allEvents.find(e => e.id === id);
+  if (!ev) return;
+  deleteTargetId = id;
+  deleteEventName.textContent = ev.event_name;
+  openModal(deleteModal);
+}
+
+async function confirmDelete() {
+  if (deleteTargetId == null) return;
+  const btn = document.getElementById('confirmDeleteBtn');
+  btn.disabled = true;
+  btn.textContent = 'Deleting...';
+  try {
+    await deleteEventById(deleteTargetId);
+    showToast('Event deleted successfully!');
+    closeModal(deleteModal);
+    fetchEvents(searchInput.value.trim());
+  } catch (err) {
+    showToast('Failed to delete the event.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Delete';
+    deleteTargetId = null;
+  }
+}
+
+// ======================================================
+// Modal helpers
+// ======================================================
+function openModal(modal) { modal.classList.add('open'); }
+function closeModal(modal) { modal.classList.remove('open'); }
+
+// ======================================================
+// Toast
+// ======================================================
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = `toast show ${type === 'error' ? 'toast-error' : ''}`;
+  setTimeout(() => { toast.className = 'toast'; }, 2800);
+}
+
+// ======================================================
+// Utilities
+// ======================================================
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatTime(timeStr) {
+  if (!timeStr) return '—';
+  const [h, m] = timeStr.split(':');
+  const hour = parseInt(h, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour12}:${m} ${ampm}`;
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+</script>
+</body>
+</html>
